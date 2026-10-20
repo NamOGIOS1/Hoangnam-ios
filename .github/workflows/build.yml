@@ -2,13 +2,18 @@ name: Build HOANG NAM iOS
 on: [workflow_dispatch]
 jobs:
   build:
-    runs-on: macos-latest
+    runs-on: macos-13
     steps:
       - uses: actions/checkout@v4
+      - name: Fix duplicate build.yml bug
+        run: |
+          rm -f build.yml
+          rm -f ./build.yml
+          if [ -f HOANGNAM.xcodeproj/project.pbxproj ]; then sed -i '' '/build.yml/d' HOANGNAM.xcodeproj/project.pbxproj 2>/dev/null || sed -i '/build.yml/d' HOANGNAM.xcodeproj/project.pbxproj; fi
       - name: Install XcodeGen
         run: brew install xcodegen
       - name: Generate Xcode project
-        run: xcodegen generate || echo "no xcodegen"
+        run: xcodegen generate || echo "skip"
       - name: Build iOS app
         run: |
           rm -rf build
