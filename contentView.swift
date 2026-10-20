@@ -2,16 +2,12 @@ import SwiftUI
 
 struct ContentView: View {
     @State private var key = ""
-    @State private var activated = false
     @State private var message = "Nhập key để kích hoạt"
+    @State private var loading = false
+    @State private var activated = false
 
-    private let blue = Color(red: 0.15, green: 0.48, blue: 1.0)
-    private let features = [
-        "AntiBan",
-        "AimBody",
-        "Nhẹ Tâm",
-        "AimLock"
-    ]
+    private let server =
+        "https://blue-lab-a886.baonam310112.workers.dev/verify"
 
     var body: some View {
         ZStack {
@@ -28,76 +24,90 @@ struct ContentView: View {
             VStack(spacing: 24) {
                 Image(systemName: "key.horizontal.fill")
                     .font(.system(size: 48))
-                    .foregroundStyle(blue)
+                    .foregroundStyle(.blue)
 
                 Text("HOANG NAM")
                     .font(.system(size: 30, weight: .black))
                     .tracking(3)
                     .foregroundStyle(.white)
 
-                Text("KEY ACTIVATION")
-                    .font(.caption.bold())
-                    .tracking(4)
-                    .foregroundStyle(blue)
+                if activated {
+                    Text("KÍCH HOẠT THÀNH CÔNG")
+                        .foregroundStyle(.green)
+                } else {
+                    TextField("Nhập key của bạn", text: $key)
+                        .textInputAutocapitalization(.characters)
+                        .autocorrectionDisabled()
+                        .padding()
+                        .background(.white.opacity(0.1))
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .foregroundStyle(.white)
 
-                if !activated {
-                    VStack(spacing: 16) {
-                        TextField("Nhập key của bạn", text: $key)
-                            .textInputAutocapitalization(.characters)
-                            .autocorrectionDisabled()
+                    Button(action: verifyKey) {
+                        Text(loading ? "ĐANG KIỂM TRA..." : "KÍCH HOẠT KEY")
+                            .fontWeight(.bold)
+                            .frame(maxWidth: .infinity)
                             .padding()
-                            .background(.white.opacity(0.08))
+                            .background(.blue)
                             .clipShape(RoundedRectangle(cornerRadius: 12))
                             .foregroundStyle(.white)
-
-                        Button {
-                            message = "Chưa kết nối máy chủ xác thực key"
-                        } label: {
-                            Text("KÍCH HOẠT KEY")
-                                .fontWeight(.bold)
-                                .frame(maxWidth: .infinity)
-                                .padding()
-                                .background(blue)
-                                .clipShape(RoundedRectangle(cornerRadius: 12))
-                                .foregroundStyle(.white)
-                        }
-                        .disabled(key.trimmingCharacters(
-                            in: .whitespacesAndNewlines
-                        ).isEmpty)
-
-                        Text(message)
-                            .font(.footnote)
-                            .foregroundStyle(.orange)
                     }
-                    .padding(20)
-                    .background(.white.opacity(0.04))
-                    .clipShape(RoundedRectangle(cornerRadius: 20))
-                } else {
-                    ForEach(features, id: \.self) { feature in
-                        HStack {
-                            Image(systemName: "circle.grid.2x2.fill")
-                                .foregroundStyle(blue)
+                    .disabled(loading || key.trimmingCharacters(
+                        in: .whitespacesAndNewlines
+                    ).isEmpty)
 
-                            Text(feature)
-                                .foregroundStyle(.white)
-
-                            Spacer()
-
-                            Text("CHƯA TÍCH HỢP")
-                                .font(.caption2)
-                                .foregroundStyle(.orange)
-                        }
-                        .padding()
-                        .background(.white.opacity(0.06))
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                    }
+                    Text(message)
+                        .foregroundStyle(.orange)
                 }
 
                 Spacer()
             }
             .padding(24)
-            .padding(.top, 35)
+            .padding(.top, 40)
         }
         .preferredColorScheme(.dark)
+    }
+
+    private func verifyKey() {
+        guard let url = URL(string: server) else { return }
+
+        loading = true
+        message = "Đang kiểm tra key..."
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue(
+            "application/json",
+            forHTTPHeaderField: "Content-Type"
+        )
+        request.httpBody = try? JSONSerialization.data(
+            withJSONObject: ["key": key.trimmingCharacters(
+                in: .whitespacesAndNewlines
+            )]
+        )
+
+        URLSession.shared.dataTask(with: request) { data, _, error in
+            DispatchQueue.main.async {
+                loading = false
+
+                guard error == nil,
+                      let data = data,
+                      let result = try? JSONSerialization.jsonObject(
+                        with: data
+                      ) as? [String: Any],
+                      let valid = result["valid"] as? Bool else {
+                    message = "Không kết nối được máy chủ"
+                    return
+                }
+
+                if valid {
+                    activated = true
+                    message = "Key hợp lệ"
+                } else {
+                    message = result["message"] as? String
+                        ?? "Key không hợp lệ"
+                }
+            }
+        }.resume()
     }
 }
