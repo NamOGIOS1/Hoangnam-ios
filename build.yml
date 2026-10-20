@@ -1,0 +1,24 @@
+
+name: Build HOANG NAM iOS
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-15
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Check Swift files
+        run: |
+          echo "Checking project files..."
+          ls -la
+          find . -name "*.swift"
+
+      - name: Check Xcode
+        run: |
+          xcodebuild -version
+          swift --version
