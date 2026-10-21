@@ -2,7 +2,7 @@ name: Build HOANG NAM iOS
 on: [workflow_dispatch]
 jobs:
   build:
-    runs-on: macos-13
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
       - name: Fix duplicate build.yml bug
