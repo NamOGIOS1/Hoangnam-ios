@@ -1,4 +1,3 @@
-
 name: HOANGNAM
 options:
   bundleIdPrefix: com.hoangnam
@@ -14,9 +13,9 @@ targets:
         excludes:
           - project.yml
           - README.md
-          - Info.plist
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.hoangnam.app
         PRODUCT_NAME: HOANGNAM
         SWIFT_VERSION: "5.0"
+        GENERATE_INFOPLIST_FILE: YES
